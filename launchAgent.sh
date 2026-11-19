@@ -10,9 +10,6 @@ USERHOME="${HOME}"
 # Project directory to be mounted to agent
 PROJECTDIR="$(realpath "$PWD")"
 
-# Image to runf
-TARGETIMAGE=$1
-
 #
 # Usage
 #
@@ -26,6 +23,7 @@ usage() {
 #
 init() {
   # Check directory whitelist config file
+  TARGET_IMAGE=$1
   ALLOWED_DIRS=( )
   CONFIG_FILE="${SCRIPT_DIR}/allowed-dirs.conf"
 
@@ -55,7 +53,7 @@ init() {
   fi    
 
   PROJECT_NAME="$(basename -- "$PROJECTDIR")"
-  CONTAINER_NAME="${TARGETIMAGE}-${PROJECT_NAME}"
+  CONTAINER_NAME="${TARGET_IMAGE}-${PROJECT_NAME}"
 
   echo "Project:   $PROJECTDIR"
   echo "Container: $CONTAINER_NAME"  
@@ -161,17 +159,17 @@ run_devbase() {
 
 case "$1" in
   pi)
-    init
+    init "$1"
     run_pi "pi-agent:latest"
     ;;
 
   opencode)
-    init
+    init "$1"
     run_opencode "opencode-agent:latest"
     ;;
 
   devbase)
-    init
+    init "$1"
     run_devbase "dev-base:latest"
     ;;
 
