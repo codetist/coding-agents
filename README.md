@@ -8,7 +8,8 @@ development, with some Node support for web frontend implementation.
 > This repo is my **personal** approach to run containerized
 > open source AI agents, powered by any LLM made available through 
 > Open WebUI. It is not (and will never be) a general solution 
-> for anybody. At most, it might be a useful inspiration for others.
+> for anybody. At most, it might be a useful starting point or
+> inspiration for others.
 
 ## Structure
 - [podman](./podman) - contains Dockerfiles to build all container
@@ -30,8 +31,8 @@ development, with some Node support for web frontend implementation.
   - `OPENSERP_BASEURL` - Base URL to access `OpenSERP` for web access and
     search
 - Add available models to
-  [models.json (for Pi)](./config/agents/pi/models.json) and
-  [opencode.json (for OpenCode)](./config/agents/opencode/opencode.json)
+  [models.json (for pi)](./config/agents/pi/models.json) and
+  [opencode.json (for opencode)](./config/agents/opencode/opencode.json)
 - Create `allowed-dirs.conf` from `allowed-dirs.conf.template` and add all
   directories that are allowed to use with agents
 
