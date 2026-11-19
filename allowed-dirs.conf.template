@@ -1,0 +1,5 @@
+# Directories whitelisted for agent use,
+# copy to allowed-dirs.conf
+ALLOWED_DIRS=(
+    "${USERHOME}/Repos/coding-agents"
+)

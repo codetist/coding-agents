@@ -9,3 +9,4 @@
 
 # Local environment
 .env
+allowed-dirs.conf

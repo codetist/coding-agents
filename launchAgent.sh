@@ -1,14 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+# Local script directory
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
 # User home directory
 USERHOME="${HOME}"
-
-# Directory whitelist
-ALLOWED_DIRS=(
-    "${USERHOME}/Projekte/pi-podman-agent"
-    "${USERHOME}/Projekte/coding-agents"
-)
 
 # Project directory to be mounted to agent
 PROJECTDIR="$(realpath "$PWD")"
@@ -28,7 +25,19 @@ usage() {
 # Init
 #
 init() {
-  # Check whitelist
+  # Check directory whitelist config file
+  ALLOWED_DIRS=( )
+  CONFIG_FILE="${SCRIPT_DIR}/allowed-dirs.conf"
+
+  if [[ ! -f "${CONFIG_FILE}" ]]; then
+    echo "Error: Configuration file missing: ${CONFIG_FILE}" >&2
+    exit 1
+  fi
+
+  # shellcheck disable=SC1090
+  source "${CONFIG_FILE}"
+
+  # Check current directory is whitelisted
   ALLOWED=false
 
   for dir in "${ALLOWED_DIRS[@]}"; do
