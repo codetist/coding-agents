@@ -1,0 +1,49 @@
+{
+  "enabled": true,
+  "sandboxUserShell": true,
+  "permissionPromptTimeoutSeconds": 600,
+
+  "network": {
+    "disabled": false,
+    "allowedDomains": [
+      "github.com",
+      "*.github.com",
+      "registry.npmjs.org",
+      "*.npmjs.org"
+    ],
+    "deniedDomains": []
+  },
+
+  "filesystem": {
+    "allowRead": [
+      "."
+    ],
+    "allowWrite": [
+      "."
+    ],
+    "denyRead": [
+      "~/.aws",
+      "~/.ansible",
+      "~/.cdk",
+      "~/.config",
+      "~/.gnupg",
+      "~/.opencode",		
+      "~/.pi",
+      "~/.ssh"
+    ],
+    "denyWrite": [
+      "~/.aws",
+      "~/.ansible",
+      "~/.cdk",
+      "~/.config",
+      "~/.gnupg",
+      "~/.opencode",		
+      "~/.pi",
+      "~/.ssh",
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "openserp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@openserp/mcp"
+      ],
+      "env": {
+        "OPENSERP_BASE_URL": "$OPENSERP_BASEURL"
+      },
+      "exposure": "direct"
+    }
+  }
+}

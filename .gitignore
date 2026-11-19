@@ -1,0 +1,11 @@
+### IntelliJ IDEA ###
+.idea
+*.ipr
+*.iml
+*.iws
+
+### Mac OS ###
+.DS_Store
+
+# Local environment
+.env

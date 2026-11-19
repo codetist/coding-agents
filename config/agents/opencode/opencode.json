@@ -1,0 +1,105 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "openserp": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@openserp/mcp"
+        ],
+        "environment": {
+          "OPENSERP_BASE_URL": "{env:OPENSERP_BASEURL}"
+        },
+        "enabled": true
+      }
+    }
+  },
+  "model": "openwebui/kimi-k3",
+  "permission": {
+    "*": "ask",
+    "bash": "ask",
+    "edit": "ask",
+    "external_directory": "deny",
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",    
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny"
+    },
+    "skill": "ask",
+    "task": "ask",
+    "todowrite": "ask",
+    "webfetch": "ask",
+    "websearch": "ask"
+  },
+  "providers": {
+    "openwebui": {
+      "name": "Open WebUI",
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
+        "baseURL": "{env:OPENWEBUI_API_BASEURL}",
+        "apiKey": "{env:OPENWEBUI_API_TOKEN}"
+      },
+      "models": {
+        "gpt-oss-20b": {
+          "name": "GPT OSS 20B",
+          "modelID": "gpt-oss-20b",
+          "limit": {
+            "context": 128000,
+            "output": 16384
+          },
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          }
+        },
+        "gpt-oss-120b": {
+          "name": "GPT OSS 120B",
+          "modelID": "gpt-oss-120b",
+          "limit": {
+            "context": 128000,
+            "output": 16384
+          },
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          }
+        },
+        "kimi-k3": {
+          "name": "Kimi K3",
+          "modelID": "kimi-k3",
+          "limit": {
+            "context": 1000000,
+            "output": 127999
+          },
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          }
+        },
+        "qwen3-32b": {
+          "name": "Qwen3 32B",
+          "modelID": "qwen3-32b",
+          "limit": {
+            "context": 32768,
+            "output": 8192
+          },
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          }
+        }
+      }
+    }
+  },
+  "plugins": [
+  ]
+}
