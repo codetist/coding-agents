@@ -10,6 +10,9 @@ USERHOME="${HOME}"
 # Project directory to be mounted to agent
 PROJECTDIR="$(realpath "$PWD")"
 
+# Host NPM cache directory
+NPM_CACHE="$(npm config get cache)"
+
 #
 # Usage
 #
@@ -54,9 +57,71 @@ init() {
 
   PROJECT_NAME="$(basename -- "$PROJECTDIR")"
   CONTAINER_NAME="${TARGET_IMAGE}-${PROJECT_NAME}"
+}
 
-  echo "Project:   $PROJECTDIR"
-  echo "Container: $CONTAINER_NAME"  
+#
+# run_container
+#
+run_container() {
+  local -a CONTAINER_EXTRA_ARGS=("$@")
+
+  echo "Launching agent container:"
+  echo "Project name is $CONTAINER_NAME"
+  echo "Project directory is $PROJECTDIR"
+  echo "Using image $IMAGE"
+
+  # Default Podman arguments,
+  # valid for devbase image and all inherited images
+  local -a CONTAINER_DEFAULT_ARGS=(
+    --name "$CONTAINER_NAME"
+    --security-opt=no-new-privileges
+    --cap-drop=ALL
+    --pids-limit=512
+    # Add committer details without mounting full git config
+    --env GIT_AUTHOR_NAME="$(git config user.name)"
+    --env GIT_AUTHOR_EMAIL="$(git config user.email)"
+    --env GIT_COMMITTER_NAME="$(git config user.name)"
+    --env GIT_COMMITTER_EMAIL="$(git config user.email)"
+    # As base image is a node image use /home/node as default home
+    --env HOME=/home/node
+    # Mount global NPM cache from client:
+    # Content in NPM cache can include multi-platform versions
+    # of dependencies at the same time.
+    --env npm_config_cache=/home/node/.npm
+    --env npm_config_prefer_offline=true
+    --volume "${NPM_CACHE}:/home/node/.npm:rw"
+    # Mount project dir
+    --volume "${PROJECTDIR}:${PROJECTDIR}:rw"
+    # Mount Maven settings and repo
+    --volume "${HOME}/.m2:/home/node/.m2:rw"
+    # Set project dir to be working dir
+    --workdir "${PROJECTDIR}"
+  )
+
+  # Isolate existing macOS node_modules:
+  # Optionally present node_modules directories are mounted to
+  # a temporary volume without copying the hosts content. It is
+  # done because Node dependencies might be OS specific. This
+  # way the macOS dependencies stay unchanged while the containers
+  # Linux dependencies might be different.
+  local node_modules_dir
+  while IFS= read -r -d '' node_modules_dir; do
+    CONTAINER_DEFAULT_ARGS+=(
+      --mount "type=volume,destination=${node_modules_dir}"
+    )
+  done < <(
+    find "$PROJECTDIR" \
+      -type d \
+      -name node_modules \
+      -prune \
+      -print0
+  )
+
+  podman run --rm -it \
+    --userns=keep-id:uid=1000,gid=1000 \
+    "${CONTAINER_DEFAULT_ARGS[@]}" \
+    "$@" \
+    "$IMAGE"
 }
 
 #
@@ -68,26 +133,15 @@ run_pi() {
 
   mkdir -p "$PICONFIG"
 
-  podman run --rm -it \
-    --name "$CONTAINER_NAME" \
-    --security-opt=no-new-privileges \
-    --cap-drop=ALL \
-    --pids-limit=256 \
-    --userns=keep-id:uid=1000,gid=1000 \
-    --env HOME=/home/node \
-    --env PI_CODING_AGENT_DIR=/home/node/.pi/agent \
-    --env OPENWEBUI_API_TOKEN \
-    --env OPENWEBUI_API_BASEURL \
-    --env OPENSERP_BASEURL \
-    --env GIT_AUTHOR_NAME="$(git config user.name)" \
-    --env GIT_AUTHOR_EMAIL="$(git config user.email)" \
-    --env GIT_COMMITTER_NAME="$(git config user.name)" \
-    --env GIT_COMMITTER_EMAIL="$(git config user.email)" \
+  CONTAINER_EXTRA_ARGS=(
+    --env PI_CODING_AGENT_DIR=/home/node/.pi/agent
+    --env OPENWEBUI_API_TOKEN
+    --env OPENWEBUI_API_BASEURL
+    --env OPENSERP_BASEURL
     --volume "${PICONFIG}:/home/node/.pi/agent:rw" \
-    --volume "${PROJECTDIR}:${PROJECTDIR}:rw" \
-    --volume "${HOME}/.m2:/home/node/.m2:rw" \
-    --workdir "${PROJECTDIR}" \
-    "$IMAGE"    
+  )
+
+  run_container "${CONTAINER_EXTRA_ARGS[@]}"
 }
 
 #
@@ -105,28 +159,17 @@ run_opencode() {
   mkdir -p "$OPENCODE_STATE"
   mkdir -p "$OPENCODE_CACHE"
 
-  podman run --rm -it \
-    --name "$CONTAINER_NAME" \
-    --security-opt=no-new-privileges \
-    --cap-drop=ALL \
-    --pids-limit=256 \
-    --userns=keep-id:uid=1000,gid=1000 \
-    --env HOME=/home/node \
-    --env OPENWEBUI_API_TOKEN \
-    --env OPENWEBUI_API_BASEURL \
-    --env OPENSERP_BASEURL \
-    --env GIT_AUTHOR_NAME="$(git config user.name)" \
-    --env GIT_AUTHOR_EMAIL="$(git config user.email)" \
-    --env GIT_COMMITTER_NAME="$(git config user.name)" \
-    --env GIT_COMMITTER_EMAIL="$(git config user.email)" \
-    --volume "${OPENCODE_CONFIG}:/home/node/.config/opencode:rw" \
-    --volume "${OPENCODE_DATA}:/home/node/.local/share/opencode:rw" \
-    --volume "${OPENCODE_STATE}:/home/node/.local/state/opencode:rw" \
-    --volume "${OPENCODE_CACHE}:/home/node/.cache/opencode:rw" \
-    --volume "${PROJECTDIR}:${PROJECTDIR}:rw" \
-    --volume "${HOME}/.m2:/home/node/.m2:rw" \
-    --workdir "${PROJECTDIR}" \
-    "$IMAGE"
+  CONTAINER_EXTRA_ARGS=(
+    --env OPENWEBUI_API_TOKEN
+    --env OPENWEBUI_API_BASEURL
+    --env OPENSERP_BASEURL
+    --volume "${OPENCODE_CONFIG}:/home/node/.config/opencode:rw"
+    --volume "${OPENCODE_DATA}:/home/node/.local/share/opencode:rw"
+    --volume "${OPENCODE_STATE}:/home/node/.local/state/opencode:rw"
+    --volume "${OPENCODE_CACHE}:/home/node/.cache/opencode:rw"
+  )
+
+  run_container "${CONTAINER_EXTRA_ARGS[@]}"
 }
 
 #
@@ -135,21 +178,7 @@ run_opencode() {
 run_devbase() {
   IMAGE=$1
 
-   podman run --rm -it \
-    --name "$CONTAINER_NAME" \
-    --security-opt=no-new-privileges \
-    --cap-drop=ALL \
-    --pids-limit=256 \
-    --userns=keep-id:uid=1000,gid=1000 \
-    --env HOME=/home/node \
-    --env GIT_AUTHOR_NAME="$(git config user.name)" \
-    --env GIT_AUTHOR_EMAIL="$(git config user.email)" \
-    --env GIT_COMMITTER_NAME="$(git config user.name)" \
-    --env GIT_COMMITTER_EMAIL="$(git config user.email)" \
-    --volume "${PROJECTDIR}:${PROJECTDIR}:rw" \
-    --volume "${HOME}/.m2:/home/node/.m2:rw" \
-    --workdir "${PROJECTDIR}" \
-    "$IMAGE" 
+  run_container
 }
 
 #

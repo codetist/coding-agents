@@ -18,9 +18,14 @@ development, with some Node support for web frontend implementation.
   make agents work
 
 ## Requirements
-- `macOS` (should mostly work on Linux)
+- `macOS` (Apple Silicon)
 - `Podman`
 - `Open WebUI` with at least one available LLM through API
+
+> [!TIP]
+> Some paths (like Node installed through Homebrew) might be different
+> depending on the platform (Apple Silicon vs. Intel). Some commands in
+> Bash might not work on Linux/Unix platform.
 
 ## Setup
 - Setup directories and base configuration for `pi` and/or `opencode`
